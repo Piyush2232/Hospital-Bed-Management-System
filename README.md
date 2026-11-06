@@ -43,8 +43,8 @@ HTML5 + CSS + JavaScript           Python Flask (RESTful API)              SQLAl
 
 ### 1. Clone the repository
 ```bash
-git clone <your-repository-url>
-cd SE_Project
+git clone https://github.com/Piyush2232/Hospital-Bed-Management-System.git
+cd Hospital-Bed-Management-System
 ```
 
 ### 2. Install dependencies
