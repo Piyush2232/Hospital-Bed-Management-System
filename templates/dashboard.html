@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header">
+    <h1>Dashboard</h1>
+    <button class="btn" onclick="loadDashboard()">REFRESH</button>
+</div>
+
+<!-- Stats Cards -->
+<div class="stats-grid" id="stats-grid"></div>
+
+<!-- Ward Bed Grids -->
+<div id="wards-container"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", loadDashboard);
+
+function loadDashboard() {
+    Promise.all([
+        fetch("/api/stats").then(r => r.json()),
+        fetch("/api/wards").then(r => r.json()),
+    ]).then(([stats, wards]) => {
+        renderStats(stats);
+        renderWards(wards);
+    });
+}
+
+function renderStats(s) {
+    document.getElementById("stats-grid").innerHTML = `
+        <div class="stat-card">
+            <div class="stat-info"><h3>${s.total}</h3><p>TOTAL BEDS</p></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-info"><h3>${s.available}</h3><p>AVAILABLE</p></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-info"><h3>${s.occupied}</h3><p>OCCUPIED</p></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-info"><h3>${s.cleaning}</h3><p>CLEANING</p></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-info"><h3>${s.maintenance}</h3><p>MAINTENANCE</p></div>
+        </div>
+        <div class="stat-card rate">
+            <div class="stat-info"><h3>${s.occupancy_rate}%</h3><p>OCCUPANCY</p></div>
+            <div class="rate-bar"><div class="rate-fill" style="width:${s.occupancy_rate}%"></div></div>
+        </div>
+    `;
+}
+
+function renderWards(wards) {
+    const container = document.getElementById("wards-container");
+    container.innerHTML = wards.map(w => `
+        <div class="ward-section">
+            <div class="ward-header">
+                <h2>${w.name}
+                    <span class="ward-badge">${w.ward_type.replace('_', ' ')}</span>
+                    <span class="ward-floor">FLOOR ${w.floor}</span>
+                </h2>
+                <div class="ward-counts">
+                    <span class="count available">${w.available} FREE</span>
+                    <span class="count occupied">${w.occupied} OCCUPIED</span>
+                </div>
+            </div>
+            <div class="bed-grid">
+                ${w.beds.map(b => renderBedCard(b)).join('')}
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderBedCard(b) {
+    const statusClass = b.status.toLowerCase();
+    const patientInfo = b.patient ? `<div class="bed-patient">${b.patient.name}</div>` : '';
+    return `
+        <div class="bed-card ${statusClass}" onclick='openBedModal(${JSON.stringify(b)})'>
+            <div class="bed-number">${b.bed_number}</div>
+            <div class="bed-type">${b.bed_type}</div>
+            <div class="bed-status">${b.status}</div>
+            ${patientInfo}
+        </div>
+    `;
+}
+</script>
+{% endblock %}

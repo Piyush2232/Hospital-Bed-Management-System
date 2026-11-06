@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hospital Bed Management</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Doto:wght@400;700&family=Space+Grotesk:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <div class="brand-label">SYSTEM</div>
+            <div class="brand-name">BED.MGR</div>
+        </div>
+        <ul class="nav-links">
+            <li><a href="/" class="{% if request.path == '/' %}active{% endif %}">
+                [ DASHBOARD ]
+            </a></li>
+            <li><a href="/admit" class="{% if request.path == '/admit' %}active{% endif %}">
+                [ ADMIT ]
+            </a></li>
+            <li><a href="/patients" class="{% if request.path == '/patients' %}active{% endif %}">
+                [ PATIENTS ]
+            </a></li>
+        </ul>
+        <div class="sidebar-footer">
+            <div class="legend-title">STATUS</div>
+            <div class="legend">
+                <div class="legend-item"><span class="dot available"></span> AVAILABLE</div>
+                <div class="legend-item"><span class="dot occupied"></span> OCCUPIED</div>
+                <div class="legend-item"><span class="dot cleaning"></span> CLEANING</div>
+                <div class="legend-item"><span class="dot reserved"></span> RESERVED</div>
+                <div class="legend-item"><span class="dot maintenance"></span> MAINTENANCE</div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Modal Overlay -->
+    <div id="modal-overlay" class="modal-overlay" onclick="closeModal()"></div>
+    <div id="modal" class="modal">
+        <div class="modal-header">
+            <h3 id="modal-title">Bed Details</h3>
+            <button onclick="closeModal()" class="modal-close">[ X ]</button>
+        </div>
+        <div id="modal-body" class="modal-body"></div>
+    </div>
+
+    <!-- Toast (styled as inline status) -->
+    <div id="toast" class="toast"></div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header">
+    <h1>Patients</h1>
+    <div class="filter-group">
+        <button class="btn active" onclick="loadPatients(''); setActive(this)">ALL</button>
+        <button class="btn" onclick="loadPatients('Admitted'); setActive(this)">ADMITTED</button>
+        <button class="btn" onclick="loadPatients('Discharged'); setActive(this)">DISCHARGED</button>
+    </div>
+</div>
+
+<div class="table-card">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>NAME</th>
+                <th>AGE</th>
+                <th>GENDER</th>
+                <th>PRIORITY</th>
+                <th>CONDITION</th>
+                <th>WARD</th>
+                <th>BED</th>
+                <th>STATUS</th>
+                <th>ACTIONS</th>
+            </tr>
+        </thead>
+        <tbody id="patients-body"></tbody>
+    </table>
+    <p id="no-patients" class="hint" style="display:none; text-align:center; padding:48px 0;">[NO PATIENTS FOUND]</p>
+</div>
+
+<!-- Transfer Modal -->
+<div id="transfer-overlay" class="modal-overlay" onclick="closeTransferModal()" style="display:none;"></div>
+<div id="transfer-modal" class="modal" style="display:none;">
+    <div class="modal-header">
+        <h3>Transfer Patient</h3>
+        <button onclick="closeTransferModal()" class="modal-close">[ X ]</button>
+    </div>
+    <div class="modal-body">
+        <p id="transfer-info" style="font-family:'Space Mono',monospace;font-size:12px;letter-spacing:0.04em;text-transform:uppercase;color:var(--text-secondary);margin-bottom:16px;"></p>
+        <div class="form-group">
+            <label>TARGET WARD</label>
+            <select id="t-ward" onchange="findTransferBeds()">
+                <option value="">Select Ward</option>
+                <option value="Emergency">Emergency</option>
+                <option value="ICU">ICU</option>
+                <option value="General_Male">General — Male</option>
+                <option value="General_Female">General — Female</option>
+                <option value="Pediatric">Pediatric</option>
+                <option value="Surgical_Recovery">Surgical Recovery</option>
+            </select>
+        </div>
+        <div id="transfer-beds" class="recommended-beds"></div>
+        <div class="form-group">
+            <label>REASON</label>
+            <textarea id="t-reason" rows="2" placeholder="Reason for transfer..."></textarea>
+        </div>
+        <input type="hidden" id="t-patient-id">
+        <input type="hidden" id="t-bed-id">
+        <button class="btn btn-primary btn-block" id="transfer-btn" onclick="submitTransfer()" disabled>
+            CONFIRM TRANSFER
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", () => loadPatients(''));
+
+function setActive(el) {
+    document.querySelectorAll(".filter-group .btn").forEach(b => b.classList.remove("active"));
+    el.classList.add("active");
+}
+
+function loadPatients(status) {
+    const url = status ? `/api/patients?status=${status}` : "/api/patients";
+    fetch(url).then(r => r.json()).then(patients => {
+        const tbody = document.getElementById("patients-body");
+        const noP = document.getElementById("no-patients");
+        if (patients.length === 0) {
+            tbody.innerHTML = "";
+            noP.style.display = "block";
+            return;
+        }
+        noP.style.display = "none";
+        tbody.innerHTML = patients.map(p => `
+            <tr>
+                <td style="font-family:'Space Mono',monospace;color:var(--text-disabled);">${p.id}</td>
+                <td><strong>${p.name}</strong></td>
+                <td style="font-family:'Space Mono',monospace;">${p.age}</td>
+                <td>${p.gender}</td>
+                <td><span class="priority-badge ${p.priority.toLowerCase()}">${p.priority}</span></td>
+                <td class="condition-cell">${p.medical_condition || '—'}</td>
+                <td>${p.ward_name || '—'}</td>
+                <td style="font-family:'Space Mono',monospace;">${p.bed_number || '—'}</td>
+                <td><span class="status-badge ${p.status.toLowerCase()}">${p.status}</span></td>
+                <td>
+                    ${p.status === 'Admitted' ? `
+                        <button class="btn btn-sm btn-danger" onclick="dischargePatient(${p.id}, '${p.name}')">
+                            DISCHARGE
+                        </button>
+                        <button class="btn btn-sm" onclick="openTransferModal(${p.id}, '${p.name}')">
+                            TRANSFER
+                        </button>
+                    ` : '—'}
+                </td>
+            </tr>
+        `).join('');
+    });
+}
+
+function dischargePatient(id, name) {
+    if (!confirm('Discharge patient "' + name + '"? Bed will be sent for cleaning.')) return;
+    fetch(`/api/patients/${id}/discharge`, { method: "POST" })
+    .then(r => r.json())
+    .then(data => {
+        showToast(data.error ? "[ERROR: " + data.error + "]" : "[DISCHARGED]", data.error ? "error" : "success");
+        loadPatients('');
+    });
+}
+
+/* ─── Transfer ────────────────────────────── */
+function openTransferModal(patientId, name) {
+    document.getElementById("transfer-overlay").style.display = "block";
+    document.getElementById("transfer-modal").style.display = "block";
+    document.getElementById("transfer-info").textContent = "TRANSFERRING: " + name;
+    document.getElementById("t-patient-id").value = patientId;
+    document.getElementById("t-bed-id").value = "";
+    document.getElementById("transfer-btn").disabled = true;
+    document.getElementById("transfer-beds").innerHTML = "";
+    document.getElementById("t-ward").value = "";
+}
+function closeTransferModal() {
+    document.getElementById("transfer-overlay").style.display = "none";
+    document.getElementById("transfer-modal").style.display = "none";
+}
+function findTransferBeds() {
+    const ward = document.getElementById("t-ward").value;
+    if (!ward) return;
+    fetch(`/api/beds/recommend?ward_type=${ward}`)
+    .then(r => r.json())
+    .then(beds => {
+        const c = document.getElementById("transfer-beds");
+        if (beds.length === 0) {
+            c.innerHTML = '<p class="hint warning">[NO BEDS AVAILABLE]</p>';
+            return;
+        }
+        c.innerHTML = `<div class="bed-pick-grid">${beds.map(b => `
+            <div class="bed-pick" onclick="selectTransferBed(this, ${b.id})">
+                <strong>${b.bed_number}</strong><span>${b.bed_type}</span>
+            </div>
+        `).join('')}</div>`;
+    });
+}
+function selectTransferBed(el, id) {
+    document.querySelectorAll("#transfer-beds .bed-pick").forEach(e => e.classList.remove("selected"));
+    el.classList.add("selected");
+    document.getElementById("t-bed-id").value = id;
+    document.getElementById("transfer-btn").disabled = false;
+}
+function submitTransfer() {
+    const patientId = document.getElementById("t-patient-id").value;
+    const toBedId = document.getElementById("t-bed-id").value;
+    const reason = document.getElementById("t-reason").value;
+    fetch(`/api/patients/${patientId}/transfer`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ to_bed_id: parseInt(toBedId), reason }),
+    })
+    .then(r => r.json())
+    .then(data => {
+        showToast(data.error ? "[ERROR: " + data.error + "]" : "[TRANSFERRED]", data.error ? "error" : "success");
+        closeTransferModal();
+        loadPatients('');
+    });
+}
+</script>
+{% endblock %}

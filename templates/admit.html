@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header">
+    <h1>Admit Patient</h1>
+</div>
+
+<div class="admit-container">
+    <div class="form-card">
+        <h2>PATIENT INFORMATION</h2>
+        <form id="admit-form" onsubmit="submitAdmission(event)">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>FULL NAME</label>
+                    <input type="text" id="f-name" required placeholder="Enter name">
+                </div>
+                <div class="form-group">
+                    <label>AGE</label>
+                    <input type="number" id="f-age" required min="0" max="150" placeholder="—">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>GENDER</label>
+                    <select id="f-gender" required>
+                        <option value="">Select</option>
+                        <option>Male</option>
+                        <option>Female</option>
+                        <option>Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>PRIORITY</label>
+                    <select id="f-priority">
+                        <option value="Normal">Normal</option>
+                        <option value="High">High</option>
+                        <option value="Critical">Critical</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>CONTACT</label>
+                    <input type="text" id="f-contact" placeholder="Phone">
+                </div>
+                <div class="form-group">
+                    <label>EMERGENCY CONTACT</label>
+                    <input type="text" id="f-emergency" placeholder="Phone">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>MEDICAL CONDITION</label>
+                <textarea id="f-condition" rows="3" placeholder="Describe condition..."></textarea>
+            </div>
+
+            <hr>
+            <h2>BED SELECTION</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>WARD PREFERENCE</label>
+                    <select id="f-ward" onchange="findBeds()">
+                        <option value="">Any Ward</option>
+                        <option value="Emergency">Emergency</option>
+                        <option value="ICU">ICU</option>
+                        <option value="General_Male">General — Male</option>
+                        <option value="General_Female">General — Female</option>
+                        <option value="Pediatric">Pediatric</option>
+                        <option value="Surgical_Recovery">Surgical Recovery</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>BED TYPE REQUIRED</label>
+                    <select id="f-bedtype" onchange="findBeds()">
+                        <option value="Standard">Standard</option>
+                        <option value="Oxygen">Oxygen Support</option>
+                        <option value="Ventilator">Ventilator</option>
+                        <option value="Isolation">Isolation</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="recommended-beds" class="recommended-beds">
+                <p class="hint">[SELECT WARD TO VIEW AVAILABLE BEDS]</p>
+            </div>
+
+            <input type="hidden" id="f-bed-id">
+            <div class="form-group">
+                <label>NOTES</label>
+                <textarea id="f-notes" rows="2" placeholder="Additional notes..."></textarea>
+            </div>
+
+            <div id="admit-status" class="inline-status"></div>
+
+            <button type="submit" class="btn btn-primary btn-block" id="admit-btn" disabled>
+                CONFIRM ADMISSION
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function findBeds() {
+    const ward = document.getElementById("f-ward").value;
+    const bedType = document.getElementById("f-bedtype").value;
+    const container = document.getElementById("recommended-beds");
+
+    if (!ward) {
+        container.innerHTML = '<p class="hint">[SELECT WARD TO VIEW AVAILABLE BEDS]</p>';
+        return;
+    }
+
+    fetch(`/api/beds/recommend?ward_type=${ward}&bed_type=${bedType}`)
+    .then(r => r.json())
+    .then(beds => {
+        if (beds.length === 0) {
+            container.innerHTML = '<p class="hint warning">[NO BEDS MATCHING CRITERIA]</p>';
+            document.getElementById("f-bed-id").value = "";
+            document.getElementById("admit-btn").disabled = true;
+            return;
+        }
+        container.innerHTML = `
+            <p class="hint success">[${beds.length} BED(S) AVAILABLE]</p>
+            <div class="bed-pick-grid">
+                ${beds.map(b => `
+                    <div class="bed-pick" data-id="${b.id}" onclick="selectBed(this, ${b.id})">
+                        <strong>${b.bed_number}</strong>
+                        <span>${b.bed_type}</span>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    });
+}
+
+function selectBed(el, id) {
+    document.querySelectorAll(".bed-pick").forEach(e => e.classList.remove("selected"));
+    el.classList.add("selected");
+    document.getElementById("f-bed-id").value = id;
+    document.getElementById("admit-btn").disabled = false;
+}
+
+function submitAdmission(e) {
+    e.preventDefault();
+    const bedId = document.getElementById("f-bed-id").value;
+    if (!bedId) { showToast("[ERROR: SELECT A BED]", "error"); return; }
+
+    const body = {
+        name: document.getElementById("f-name").value,
+        age: document.getElementById("f-age").value,
+        gender: document.getElementById("f-gender").value,
+        priority: document.getElementById("f-priority").value,
+        contact: document.getElementById("f-contact").value,
+        emergency_contact: document.getElementById("f-emergency").value,
+        medical_condition: document.getElementById("f-condition").value,
+        bed_id: parseInt(bedId),
+        notes: document.getElementById("f-notes").value,
+    };
+
+    fetch("/api/patients/admit", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(body),
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.error) { showToast("[ERROR: " + data.error + "]", "error"); return; }
+        showToast("[ADMITTED]", "success");
+        setTimeout(() => window.location.href = "/", 1500);
+    })
+    .catch(() => showToast("[ERROR: ADMISSION FAILED]", "error"));
+}
+</script>
+{% endblock %}

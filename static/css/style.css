@@ -1,0 +1,713 @@
+/* ═══════════════════════════════════════════════════════════
+   Nothing Design System — Hospital Bed Management
+   OLED black · Space Grotesk / Space Mono · Instrument panel
+   ═══════════════════════════════════════════════════════════ */
+
+/* ─── Google Fonts ────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Doto:wght@400;700&family=Space+Grotesk:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap');
+
+/* ─── Design Tokens ──────────────────────────────────────── */
+:root {
+    /* Surfaces */
+    --black:           #000000;
+    --surface:         #111111;
+    --surface-raised:  #1A1A1A;
+    --border:          #222222;
+    --border-visible:  #333333;
+
+    /* Text */
+    --text-disabled:   #666666;
+    --text-secondary:  #999999;
+    --text-primary:    #E8E8E8;
+    --text-display:    #FFFFFF;
+
+    /* Accent & Status */
+    --accent:          #D71921;
+    --accent-subtle:   rgba(215,25,33,0.15);
+    --success:         #4A9E5C;
+    --warning:         #D4A843;
+    --info:            #999999;
+    --interactive:     #5B9BF6;
+
+    /* Spacing (8px base) */
+    --space-2xs: 2px;
+    --space-xs:  4px;
+    --space-sm:  8px;
+    --space-md:  16px;
+    --space-lg:  24px;
+    --space-xl:  32px;
+    --space-2xl: 48px;
+    --space-3xl: 64px;
+    --space-4xl: 96px;
+
+    /* Motion */
+    --ease: cubic-bezier(0.25, 0.1, 0.25, 1);
+    --duration-micro: 150ms;
+    --duration-transition: 300ms;
+}
+
+/* ─── Reset ──────────────────────────────────────────────── */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Space Grotesk', 'DM Sans', system-ui, sans-serif;
+    background: var(--black);
+    color: var(--text-primary);
+    display: flex;
+    min-height: 100vh;
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SIDEBAR — Vertical nav, instrument-panel labels
+   ═══════════════════════════════════════════════════════════ */
+
+.sidebar {
+    width: 220px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    height: 100vh;
+    z-index: 100;
+}
+
+.sidebar-header {
+    padding: var(--space-lg) var(--space-lg) var(--space-md);
+    border-bottom: 1px solid var(--border);
+}
+.sidebar-header .brand-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+}
+.sidebar-header .brand-name {
+    font-family: 'Doto', 'Space Mono', monospace;
+    font-size: 28px;
+    color: var(--text-display);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin-top: var(--space-xs);
+}
+
+.nav-links {
+    list-style: none;
+    padding: var(--space-lg) 0;
+    flex: 1;
+}
+.nav-links li a {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: 12px var(--space-lg);
+    color: var(--text-disabled);
+    text-decoration: none;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transition: color var(--duration-micro) var(--ease);
+    border-left: 2px solid transparent;
+}
+.nav-links li a:hover {
+    color: var(--text-primary);
+}
+.nav-links li a.active {
+    color: var(--text-display);
+    border-left-color: var(--accent);
+}
+
+/* Legend in sidebar footer */
+.sidebar-footer {
+    padding: var(--space-md) var(--space-lg);
+    border-top: 1px solid var(--border);
+}
+.legend { display: flex; flex-direction: column; gap: var(--space-xs); }
+.legend-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-xs);
+}
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    color: var(--text-disabled);
+}
+.dot {
+    width: 8px; height: 8px; border-radius: 50%;
+}
+.dot.available   { background: var(--success); }
+.dot.occupied    { background: var(--accent); }
+.dot.cleaning    { background: var(--warning); }
+.dot.reserved    { background: var(--interactive); }
+.dot.maintenance { background: var(--text-disabled); }
+
+/* ═══════════════════════════════════════════════════════════
+   MAIN CONTENT
+   ═══════════════════════════════════════════════════════════ */
+
+.main-content {
+    margin-left: 220px;
+    padding: var(--space-2xl) var(--space-xl);
+    flex: 1;
+    min-height: 100vh;
+    /* Dot-grid subtle background */
+    background-image: radial-gradient(circle, var(--border) 0.5px, transparent 0.5px);
+    background-size: 12px 12px;
+}
+
+/* Page header */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: var(--space-2xl);
+}
+.page-header h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 36px;
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    color: var(--text-display);
+}
+.page-header h1 i { display: none; } /* No filled icons */
+
+/* ═══════════════════════════════════════════════════════════
+   STATS GRID — Hero numbers, instrument panel
+   ═══════════════════════════════════════════════════════════ */
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: var(--space-md);
+    margin-bottom: var(--space-2xl);
+}
+
+.stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: var(--space-lg) var(--space-md);
+    transition: border-color var(--duration-micro) var(--ease);
+    position: relative;
+    overflow: hidden;
+}
+.stat-card:hover { border-color: var(--border-visible); }
+
+/* Hide the colored icon circles — Nothing doesn't do that */
+.stat-icon { display: none; }
+
+.stat-info h3 {
+    font-family: 'Doto', 'Space Mono', monospace;
+    font-size: 42px;
+    font-weight: 400;
+    color: var(--text-display);
+    letter-spacing: -0.02em;
+    line-height: 1.0;
+}
+.stat-info p {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-top: var(--space-sm);
+}
+
+/* Rate card — segmented bar instead of fill bar */
+.stat-card.rate { }
+.rate-bar {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 4px;
+    background: var(--border);
+}
+.rate-fill {
+    height: 100%;
+    background: var(--text-display);
+    transition: width 0.5s var(--ease);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   WARD SECTIONS
+   ═══════════════════════════════════════════════════════════ */
+
+.ward-section {
+    margin-bottom: var(--space-2xl);
+}
+
+.ward-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-md);
+    padding-bottom: var(--space-sm);
+    border-bottom: 1px solid var(--border);
+}
+.ward-header h2 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+.ward-header h2 i { display: none; }
+
+.ward-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border: 1px solid var(--border-visible);
+    color: var(--text-secondary);
+    padding: 2px 10px;
+    border-radius: 999px;
+}
+.ward-floor {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--text-disabled);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.ward-counts {
+    display: flex;
+    gap: var(--space-lg);
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+}
+.count.available { color: var(--success); }
+.count.occupied  { color: var(--accent); }
+
+/* ═══════════════════════════════════════════════════════════
+   BED GRID — The signature visual
+   ═══════════════════════════════════════════════════════════ */
+
+.bed-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: var(--space-sm);
+}
+
+.bed-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: var(--space-md) var(--space-sm);
+    text-align: center;
+    cursor: pointer;
+    transition: border-color var(--duration-micro) var(--ease);
+    position: relative;
+}
+.bed-card:hover { border-color: var(--text-secondary); }
+
+/* Status indicator — top-left 2px accent bar */
+.bed-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 2px;
+    border-radius: 8px 8px 0 0;
+}
+.bed-card.available::before   { background: var(--success); }
+.bed-card.occupied::before    { background: var(--accent); }
+.bed-card.cleaning::before    { background: var(--warning); }
+.bed-card.reserved::before    { background: var(--interactive); }
+.bed-card.maintenance::before { background: var(--text-disabled); }
+
+.bed-icon { display: none; } /* No filled icons */
+
+.bed-number {
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--text-display);
+    letter-spacing: 0.02em;
+}
+.bed-type {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-disabled);
+    margin-top: var(--space-xs);
+}
+.bed-status {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: var(--space-sm);
+}
+.bed-card.available .bed-status   { color: var(--success); }
+.bed-card.occupied .bed-status    { color: var(--accent); }
+.bed-card.cleaning .bed-status    { color: var(--warning); }
+.bed-card.reserved .bed-status    { color: var(--interactive); }
+.bed-card.maintenance .bed-status { color: var(--text-disabled); }
+
+.bed-patient {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 11px;
+    color: var(--text-primary);
+    margin-top: var(--space-xs);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MODAL — No shadow, border separation, backdrop 80% black
+   ═══════════════════════════════════════════════════════════ */
+
+.modal-overlay {
+    display: none;
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 200;
+}
+.modal {
+    display: none;
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    background: var(--surface);
+    border: 1px solid var(--border-visible);
+    border-radius: 16px;
+    min-width: 420px;
+    max-width: 480px;
+    z-index: 201;
+}
+.modal-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: var(--space-md) var(--space-lg);
+    border-bottom: 1px solid var(--border);
+}
+.modal-header h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--text-display);
+}
+.modal-close {
+    background: none; border: none;
+    font-family: 'Space Mono', monospace;
+    color: var(--text-secondary);
+    font-size: 18px;
+    cursor: pointer;
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    transition: color var(--duration-micro) var(--ease);
+}
+.modal-close:hover { color: var(--text-display); }
+.modal-body { padding: var(--space-lg); }
+
+/* ═══════════════════════════════════════════════════════════
+   BUTTONS — Space Mono, ALL CAPS, pill shape
+   ═══════════════════════════════════════════════════════════ */
+
+.btn {
+    display: inline-flex; align-items: center; gap: var(--space-sm);
+    padding: 12px 24px;
+    border: 1px solid var(--border-visible);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text-primary);
+    cursor: pointer;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transition: all var(--duration-micro) var(--ease);
+    text-decoration: none;
+    min-height: 44px;
+}
+.btn i { font-size: 12px; }
+.btn:hover { border-color: var(--text-primary); color: var(--text-display); }
+
+.btn-primary {
+    background: var(--text-display);
+    border-color: var(--text-display);
+    color: var(--black);
+}
+.btn-primary:hover { opacity: 0.9; }
+
+.btn-danger {
+    background: transparent;
+    border-color: var(--accent);
+    color: var(--accent);
+}
+.btn-danger:hover { background: var(--accent-subtle); }
+
+.btn-outline { background: transparent; }
+.btn-outline.active {
+    background: var(--text-display);
+    border-color: var(--text-display);
+    color: var(--black);
+}
+
+.btn-sm {
+    padding: 6px 14px;
+    font-size: 11px;
+    min-height: 32px;
+}
+.btn-block { width: 100%; justify-content: center; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ═══════════════════════════════════════════════════════════
+   FORMS — Underline inputs, Space Mono labels
+   ═══════════════════════════════════════════════════════════ */
+
+.admit-container { max-width: 640px; }
+
+.form-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: var(--space-xl);
+}
+.form-card h2 {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-lg);
+}
+.form-card hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: var(--space-xl) 0;
+}
+
+.form-row { display: flex; gap: var(--space-md); }
+.form-group { flex: 1; margin-bottom: var(--space-md); }
+
+.form-group label {
+    display: block;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-sm);
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 10px 0;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border-visible);
+    color: var(--text-primary);
+    font-family: 'Space Mono', monospace;
+    font-size: 14px;
+    border-radius: 0;
+    transition: border-color var(--duration-micro) var(--ease);
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-bottom-color: var(--text-primary);
+}
+.form-group select {
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+}
+.form-group textarea {
+    resize: vertical;
+    min-height: 60px;
+}
+
+/* ─── Bed Picker (Admit & Transfer) ──────────────────────── */
+
+.recommended-beds { margin: var(--space-md) 0; }
+
+.hint {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    color: var(--text-disabled);
+}
+.hint.success { color: var(--success); }
+.hint.warning { color: var(--warning); }
+.hint i { margin-right: var(--space-xs); }
+
+.bed-pick-grid {
+    display: flex; flex-wrap: wrap; gap: var(--space-sm); margin-top: var(--space-sm);
+}
+.bed-pick {
+    background: transparent;
+    border: 1px solid var(--border-visible);
+    border-radius: 8px;
+    padding: var(--space-sm) var(--space-md);
+    cursor: pointer;
+    text-align: center;
+    transition: border-color var(--duration-micro) var(--ease);
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    min-width: 90px;
+}
+.bed-pick:hover { border-color: var(--text-primary); }
+.bed-pick.selected {
+    border-color: var(--success);
+    background: rgba(74,158,92,0.08);
+}
+.bed-pick i { display: none; }
+.bed-pick strong {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    color: var(--text-display);
+}
+.bed-pick span {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-disabled);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TABLE — No zebra, divider rows, Space Mono numbers
+   ═══════════════════════════════════════════════════════════ */
+
+.table-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow-x: auto;
+}
+
+.data-table { width: 100%; border-collapse: collapse; }
+
+.data-table th {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    padding: 12px var(--space-md);
+    text-align: left;
+    border-bottom: 1px solid var(--border-visible);
+    font-weight: 400;
+}
+.data-table td {
+    padding: 12px var(--space-md);
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    vertical-align: middle;
+}
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: var(--surface-raised); }
+
+.condition-cell {
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text-secondary);
+}
+
+/* Tags / Badges — pill outline, no fill */
+.priority-badge, .status-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 999px;
+    border: 1px solid;
+}
+.priority-badge.critical { color: var(--accent);  border-color: var(--accent); }
+.priority-badge.high     { color: var(--warning); border-color: var(--warning); }
+.priority-badge.normal   { color: var(--success); border-color: var(--success); }
+
+.status-badge.admitted   { color: var(--text-display); border-color: var(--border-visible); }
+.status-badge.discharged { color: var(--text-disabled); border-color: var(--border); }
+
+.filter-group { display: flex; gap: var(--space-sm); }
+
+/* ═══════════════════════════════════════════════════════════
+   INLINE STATUS — replaces toast (Nothing anti-pattern)
+   ═══════════════════════════════════════════════════════════ */
+
+.inline-status {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: var(--space-sm) 0;
+    opacity: 0;
+    transition: opacity var(--duration-transition) var(--ease);
+}
+.inline-status.show { opacity: 1; }
+.inline-status.success { color: var(--success); }
+.inline-status.error   { color: var(--accent); }
+
+/* Toast kept as fallback but styled Nothing-way */
+.toast {
+    position: fixed;
+    bottom: var(--space-xl);
+    right: var(--space-xl);
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 12px var(--space-lg);
+    border-radius: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border-visible);
+    color: var(--text-primary);
+    opacity: 0;
+    transform: translateY(8px);
+    transition: all var(--duration-transition) var(--ease);
+    z-index: 300;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.success { border-color: var(--success); color: var(--success); }
+.toast.error   { border-color: var(--accent); color: var(--accent); }
+
+/* ═══════════════════════════════════════════════════════════
+   BED DETAIL (MODAL CONTENT)
+   ═══════════════════════════════════════════════════════════ */
+
+.bed-detail-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md);
+}
+.bed-detail-item label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+}
+.bed-detail-item p {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 15px;
+    font-weight: 400;
+    color: var(--text-primary);
+    margin-top: var(--space-2xs);
+}
+.modal-actions {
+    margin-top: var(--space-lg);
+    display: flex;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+}
