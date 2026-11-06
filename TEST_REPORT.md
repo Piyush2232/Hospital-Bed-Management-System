@@ -3,7 +3,7 @@
 # Hospital Bed Management System (HBMS)
 
 **Document Identifier**: STR-HBMS-V1.0  
-**Prepared by**: Piyush Prakash Sharma (2427030222)  
+**Prepared by**: Piyush Prakash Sharma (2427030222) • Ankur Rathi (247030014)  
 **Team**: Cuphead  
 **Institution**: Manipal University Jaipur  
 **Standard**: Conforming to IEEE Std 829-2008 (Standard for Software and System Test Documentation)  

@@ -3,7 +3,7 @@
 # Hospital Bed Management System (HBMS)
 
 **Prepared by:**  
-Piyush Prakash Sharma (2427030222)  
+Piyush Prakash Sharma (2427030222) • Ankur Rathi (247030014)  
 Team: Cuphead  
 Manipal University Jaipur  
 

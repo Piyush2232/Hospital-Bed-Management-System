@@ -96,5 +96,6 @@ See [TEST_REPORT.md](TEST_REPORT.md) for the complete IEEE Std 829-2008 verifica
 
 ## 👥 Authors
 - **Piyush Prakash Sharma** (2427030222)
+- **Ankur Rathi** (247030014)
 - Team: **Cuphead**
 - **Manipal University Jaipur**
